@@ -1,9 +1,9 @@
 CXX = gcc
 CXXFLAGS =
 SRCS = main.c
-TARGET = pt-saca-c
+TARGET = ptsaca
 
-.PHONY: run clean
+.PHONY: run clean build
 
 ${TARGET}:
 	${CXX} ${SRCS} ${CXXFLAGS} -o ${TARGET}
@@ -13,4 +13,9 @@ run: ${TARGET}
 
 clean: ${TARGET}
 	rm -f ${TARGET}
+
+# Build and Run
+bar: ${SRCS}
+	make clean
+	make run
 
