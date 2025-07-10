@@ -5,16 +5,16 @@
 #define ZERO_CHAR '0'
 
 // ICFL
-void icfl_find_prefix(char *w, int n, char *x, char *y) {
+void icfl_find_prefix(char *w, int n, char *prefix_x, char **prefix_y) {
 	// Parameter "n": length of "w"
 
 	if (n == 1) {
 		// x = w + '0'
-		x[0] = w[0];
-		x[1] = ZERO_CHAR;
-		x[2] = 0;
+		prefix_x[0] = w[0];
+		prefix_x[1] = ZERO_CHAR;
+		prefix_x[2] = 0;
 		// y = *empty*
-		y[0] = 0;
+		*prefix_y = w + n; // The end of "w".
 		return;
 	}
 
@@ -31,22 +31,23 @@ void icfl_find_prefix(char *w, int n, char *x, char *y) {
 
 	if (j == n - 1 && w[j] <= w[j]) {
 		// x = w + '0'
-		strcpy(x, w);
-		x[n] = ZERO_CHAR;
-		x[n + 1] = 0;
+		strcpy(prefix_x, w);
+		prefix_x[n] = ZERO_CHAR;
+		prefix_x[n + 1] = 0;
 		// y = *empty*
-		y[0] = 0;
+		*prefix_y = w + n; // The end of "w".
 		return;
 	}
 
 	// x = w[:j + 1]
-	strncpy(x, w, j + 1);
-	x[j + 1] = 0;
+	strncpy(prefix_x, w, j + 1);
+	prefix_x[j + 1] = 0;
 	// y = w[j + 1:]
-	strcpy(y, w + j + 1);
+	// strcpy(prefix_y, w + j + 1);
+	*prefix_y = w + j + 1;
 	/*
-	   printf("ICFL_FIND_PREFIX: from w=\"%s\" with result 0=\"%s\", 1=\"%s\" \n", w, x, y);
-	   */
+	printf("ICFL_FIND_PREFIX: from w=\"%s\" with result 0=\"%s\", 1=\"%s\" \n", w, prefix_x, *prefix_y);
+	*/
 }
 
 void icfl_get_failure_function(char *s, int s_inner_size, int *f, int *f_len) {
@@ -70,12 +71,12 @@ void icfl_get_failure_function(char *s, int s_inner_size, int *f, int *f_len) {
 		}
 	}
 	/*
-	   printf("ICFL_GET_FAILURE_FUNCTION: got s=\"%s\" and s_inner_size=%d, results f with %d items\n", s, s_inner_size, *f_len);
-	   for (int i = 0; i < *f_len; ++i) {
-	   printf("%d ", f[i]);
-	   }
-	   printf("\n");
-	   */
+	printf("ICFL_GET_FAILURE_FUNCTION: got s=\"%s\" and s_inner_size=%d, results f with %d items\n", s, s_inner_size, *f_len);
+	for (int i = 0; i < *f_len; ++i) {
+		printf("%d ", f[i]);
+	}
+	printf("\n");
+	*/
 }
 
 void icfl_find_bre(char *x, char *y, char *p, char *bre, int *res_last) {
@@ -83,8 +84,8 @@ void icfl_find_bre(char *x, char *y, char *p, char *bre, int *res_last) {
 	strcpy(w, x);
 	strcat(w, y); // TODO: We already know the "x" size, don't we?
 	/*
-	   printf("ICFL_FIND_BRE: from x=\"%s\" and y=\"%s\", made w=\"%s\"\n", x, y, w);
-	   */
+	printf("ICFL_FIND_BRE: from x=\"%s\" and y=\"%s\", made w=\"%s\"\n", x, y, w);
+	*/
 	int w_len = strlen(w);
 	int x_len = strlen(x);
 	int n = x_len - 1;
@@ -93,10 +94,8 @@ void icfl_find_bre(char *x, char *y, char *p, char *bre, int *res_last) {
 	int f[512];
 	int f_len = 0;
 	icfl_get_failure_function(x, n, f, &f_len);
-
 	int i = n - 1;
 	int last = n;
-
 	while (i >= 0) {
 		if (w[f[i]] < x[x_len - 1]) {
 			last = f[i] - 1;
@@ -126,14 +125,14 @@ void icfl_find_bre(char *x, char *y, char *p, char *bre, int *res_last) {
 
 void icfl(char *w, int n, char **fs, int fs_len) {
 	// Find Prefix
-	char x[256] = "";
-	char y[256] = "";
-	icfl_find_prefix(w, n, x, y);
+	char prefix_x[256] = "";
+	char *prefix_y;
+	icfl_find_prefix(w, n, prefix_x, &prefix_y);
 
 	if (
-			x[n + 1] == 0
-			&& x[n] == ZERO_CHAR
-			&& strncmp(x, w, n - 1) == 0
+			prefix_x[n + 1] == 0
+			&& prefix_x[n] == ZERO_CHAR
+			&& strncmp(prefix_x, w, n - 1) == 0
 	   ) {
 		strcpy(fs[0], w);
 		return;
@@ -143,15 +142,12 @@ void icfl(char *w, int n, char **fs, int fs_len) {
 	char p[256];
 	char bre[256];
 	int last;
-	icfl_find_bre(x, y, p, bre, &last);
-	/*
-	   printf("ICFL: icfl_find_bre with results p=\"%s\", bre=\"%s\", last=%d\n", p, bre, last);
-	   */
+	icfl_find_bre(prefix_x, prefix_y, p, bre, &last);
 
 	// Recursive ICFL
 	char *bre_plus_y = (char*) malloc(512);
 	strcpy(bre_plus_y, bre);
-	strcat(bre_plus_y, y);
+	strcat(bre_plus_y, prefix_y);
 	int bre_plus_y_len = strlen(bre_plus_y);
 	char str0[] = "                 ";
 	char str1[] = "                 ";
@@ -247,7 +243,6 @@ int main() {
 
 	// PREFIX TREE BUILD
 	PTNode *pt_root = pt_create_root();
-
 
 	return 0;
 }
