@@ -69,8 +69,8 @@ char* icfl_find_prefix(char *w, int n, char **prefix_y) {
 	return prefix_x;
 }
 
-void icfl_get_failure_function(char *s, int s_inner_size, FFList *ff_list) {
-	int m = s_inner_size;
+void icfl_get_failure_function(char *s, int s_inner_length, FFList *ff_list) {
+	int m = s_inner_length;
 	for (size_t i = 0; i < m; ++i) {
 		ff_list->list[i] = 0;
 	}
@@ -103,6 +103,7 @@ void icfl_find_bre(char *w, int w_len, char *x, char *y, FFList *ff_list, char *
 	printf("ICFL_FIND_BRE: from x=\"%s\" and y=\"%s\", made w=\"%s\"\n", x, y, w);
 	*/
 	int x_len = strlen(x);
+	char x_last_char = x[x_len - 1];
 	int n = x_len - 1;
 
 	// Get Failure Function
@@ -110,7 +111,7 @@ void icfl_find_bre(char *w, int w_len, char *x, char *y, FFList *ff_list, char *
 	int i = n - 1;
 	int last = n;
 	while (i >= 0) {
-		if (w[ff_list->list[i]] < x[x_len - 1]) {
+		if (w[ff_list->list[i]] < x_last_char) {
 			last = ff_list->list[i] - 1;
 		}
 		i = ff_list->list[i] - 1;
@@ -141,11 +142,7 @@ void icfl(char *w, int n, FFList *ff_list, char **fs, int fs_len) {
 	char *prefix_y;
 	char *prefix_x = icfl_find_prefix(w, n, &prefix_y);
 
-	if (
-			prefix_x[n + 1] == 0
-			&& prefix_x[n] == ZERO_CHAR
-			&& strncmp(prefix_x, w, n - 1) == 0
-	   ) {
+	if (*prefix_y == 0) {
 		// x = w + '0', and y = *empty*
 		free(prefix_x);
 		// w is an Inverse Lyndon word, so it's the only ICFL factor.
