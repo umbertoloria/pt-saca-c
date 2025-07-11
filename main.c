@@ -110,7 +110,7 @@ void icfl_get_failure_function(char *s, int s_inner_length, IntList *ff_list) {
 	*/
 }
 
-void icfl_find_bre(char *w, int w_len, int x_len, char x_last_char, char *y, IntList *ff_list, char *p, char *bre, int *res_last) {
+void icfl_find_bre(char *w, int w_len, int x_len, char x_last_char, char *y, IntList *ff_list, char *p, char **bre_plus_y, int *res_last) {
 	/*
 	printf("ICFL_FIND_BRE: from x=\"%s\" and y=\"%s\", made w=\"%s\"\n", x, y, w);
 	*/
@@ -134,15 +134,19 @@ void icfl_find_bre(char *w, int w_len, int x_len, char x_last_char, char *y, Int
 	// p = w[:sep1]
 	strncpy(p, w, sep1);
 	p[sep1] = 0;
-	// bre = *empty*
-	bre[0] = 0;
 	if (sep2 > sep1) {
+		/*
 		// bre = w[sep1:sep2]
 		i = 0;
 		for (int h = sep1; h < sep2; ++h) {
 			bre[i++] = w[h];
 		}
 		bre[i] = 0;
+		*/
+		*bre_plus_y = w + sep1;
+	} else {
+		// bre = *empty*
+		*bre_plus_y = w + x_len;
 	}
 	*res_last = last + 1;
 }
@@ -161,18 +165,20 @@ void icfl(char *w, int n, IntList *ff_list, IntList* factors) {
 	char x_last_char = w[x_length - 1];
 	char *y = w + x_length;
 	char p[256];
-	char bre[256];
+	char *bre_plus_y;
 	int last;
-	icfl_find_bre(w, n, x_length, x_last_char, y, ff_list, p, bre, &last);
+	icfl_find_bre(w, n, x_length, x_last_char, y, ff_list, p, &bre_plus_y, &last);
+	/*printf(" -> w=%s, x_length=%d, x_last_char=%c\n", w, x_length, x_last_char);
+	printf("    -> p=%s, bre_plus_y=%s, last=%d\n", p, bre_plus_y, last);*/
 
 	// Recursive ICFL
-	char *bre_plus_y = (char*) malloc(512);
+	/*char *bre_plus_y = (char*) malloc(512);
 	strcpy(bre_plus_y, bre);
-	strcat(bre_plus_y, y);
+	strcat(bre_plus_y, y);*/
 	int bre_plus_y_len = strlen(bre_plus_y);
 	IntList* l_factors = int_list_create(MAX_ICFL_FACTORS);
 	icfl(bre_plus_y, bre_plus_y_len, ff_list, l_factors);
-	free(bre_plus_y);
+	//free(bre_plus_y);
 	int p_len = strlen(p);
 	int l_fs_0_len = l_factors->list[0];
 	if (l_fs_0_len > last) {
