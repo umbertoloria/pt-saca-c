@@ -110,16 +110,14 @@ void icfl_get_failure_function(char *s, int s_inner_length, IntList *ff_list) {
 	*/
 }
 
-void icfl_find_bre(char *w, int w_len, char *x, char *y, IntList *ff_list, char *p, char *bre, int *res_last) {
+void icfl_find_bre(char *w, int w_len, int x_len, char x_last_char, char *y, IntList *ff_list, char *p, char *bre, int *res_last) {
 	/*
 	printf("ICFL_FIND_BRE: from x=\"%s\" and y=\"%s\", made w=\"%s\"\n", x, y, w);
 	*/
-	int x_len = strlen(x);
-	char x_last_char = x[x_len - 1];
 	int n = x_len - 1;
 
 	// Get Failure Function
-	icfl_get_failure_function(x, n, ff_list);
+	icfl_get_failure_function(w, n, ff_list);
 	int i = n - 1;
 	int last = n;
 	while (i >= 0) {
@@ -151,8 +149,8 @@ void icfl_find_bre(char *w, int w_len, char *x, char *y, IntList *ff_list, char 
 
 void icfl(char *w, int n, IntList *ff_list, IntList* factors) {
 	// Find Prefix
-	int prefix_x_length = icfl_find_prefix(w, n);
-	if (prefix_x_length == n) {
+	int x_length = icfl_find_prefix(w, n);
+	if (x_length == n) {
 		// x = w, y = *empty*
 		// w is Inverse Lyndon word => w is the only ICFL factor here
 		int_list_append(factors, n);
@@ -160,23 +158,21 @@ void icfl(char *w, int n, IntList *ff_list, IntList* factors) {
 	}
 
 	// Find Bre
-	char *prefix_x = (char *) malloc(prefix_x_length);
-	strncpy(prefix_x, w, prefix_x_length);
-	prefix_x[prefix_x_length] = 0;
-	char *prefix_y = w + prefix_x_length;
+	char x_last_char = w[x_length - 1];
+	char *y = w + x_length;
 	char p[256];
 	char bre[256];
 	int last;
-	icfl_find_bre(w, n, prefix_x, prefix_y, ff_list, p, bre, &last);
-	free(prefix_x);
+	icfl_find_bre(w, n, x_length, x_last_char, y, ff_list, p, bre, &last);
 
 	// Recursive ICFL
 	char *bre_plus_y = (char*) malloc(512);
 	strcpy(bre_plus_y, bre);
-	strcat(bre_plus_y, prefix_y);
+	strcat(bre_plus_y, y);
 	int bre_plus_y_len = strlen(bre_plus_y);
 	IntList* l_factors = int_list_create(MAX_ICFL_FACTORS);
 	icfl(bre_plus_y, bre_plus_y_len, ff_list, l_factors);
+	free(bre_plus_y);
 	int p_len = strlen(p);
 	int l_fs_0_len = l_factors->list[0];
 	if (l_fs_0_len > last) {
