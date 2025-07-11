@@ -5,6 +5,21 @@
 #define ZERO_CHAR '0'
 
 // ICFL
+typedef struct FFList {
+	int *list;
+	int length;
+} FFList;
+FFList *create_ff_list(int capacity) {
+	FFList *ff_list = (FFList *) malloc(sizeof(struct FFList));
+	ff_list->list = (int *) malloc(capacity);
+	ff_list->length = 0;
+	return ff_list;
+}
+void destroy_ff_list(FFList *ff_list) {
+	free(ff_list->list);
+	free(ff_list);
+}
+
 char* icfl_find_prefix(char *w, int n, char **prefix_y) {
 	// Parameter "n": length of "w"
 
@@ -54,36 +69,36 @@ char* icfl_find_prefix(char *w, int n, char **prefix_y) {
 	return prefix_x;
 }
 
-void icfl_get_failure_function(char *s, int s_inner_size, int *ff_list, int *ff_list_len) {
+void icfl_get_failure_function(char *s, int s_inner_size, FFList *ff_list) {
 	int m = s_inner_size;
 	for (size_t i = 0; i < m; ++i) {
-		ff_list[i] = 0;
+		ff_list->list[i] = 0;
 	}
-	*ff_list_len = m;
+	ff_list->length = m;
 	int i = 1;
 	int j = 0;
 	while (i < m) {
 		if (s[j] == s[i]) {
-			ff_list[i] = j + 1;
+			ff_list->list[i] = j + 1;
 			++i;
 			++j;
 		} else if (j > 0) {
-			j = ff_list[j - 1];
+			j = ff_list->list[j - 1];
 		} else {
-			ff_list[i] = 0;
+			ff_list->list[i] = 0;
 			++i;
 		}
 	}
 	/*
-	printf("ICFL_GET_FAILURE_FUNCTION: got s=\"%s\" and s_inner_size=%d, results f with %d items\n", s, s_inner_size, *ff_list_len);
-	for (int i = 0; i < *ff_list_len; ++i) {
-		printf("%d ", ff_list[i]);
+	printf("ICFL_GET_FAILURE_FUNCTION: got s=\"%s\" and s_inner_size=%d, results f with %d items\n", s, s_inner_size, ff_list->length);
+	for (int i = 0; i < ff_list->length; ++i) {
+		printf("%d ", ff_list->list[i]);
 	}
 	printf("\n");
 	*/
 }
 
-void icfl_find_bre(char *x, char *y, int *ff_list, int *ff_list_len, char *p, char *bre, int *res_last) {
+void icfl_find_bre(char *x, char *y, FFList *ff_list, char *p, char *bre, int *res_last) {
 	char w[512]; // TODO: Capacity of "w" should be the sum of "x" and "y" capacities
 	strcpy(w, x);
 	strcat(w, y); // TODO: We already know the "x" size, don't we?
@@ -95,14 +110,14 @@ void icfl_find_bre(char *x, char *y, int *ff_list, int *ff_list_len, char *p, ch
 	int n = x_len - 1;
 
 	// Get Failure Function
-	icfl_get_failure_function(x, n, ff_list, ff_list_len);
+	icfl_get_failure_function(x, n, ff_list);
 	int i = n - 1;
 	int last = n;
 	while (i >= 0) {
-		if (w[ff_list[i]] < x[x_len - 1]) {
-			last = ff_list[i] - 1;
+		if (w[ff_list->list[i]] < x[x_len - 1]) {
+			last = ff_list->list[i] - 1;
 		}
-		i = ff_list[i] - 1;
+		i = ff_list->list[i] - 1;
 	}
 
 	int sep1 = n - last - 1;
@@ -125,7 +140,7 @@ void icfl_find_bre(char *x, char *y, int *ff_list, int *ff_list_len, char *p, ch
 	*res_last = last + 1;
 }
 
-void icfl(char *w, int n, int *ff_list, int *ff_list_len, char **fs, int fs_len) {
+void icfl(char *w, int n, FFList *ff_list, char **fs, int fs_len) {
 	// Find Prefix
 	char *prefix_y;
 	char *prefix_x = icfl_find_prefix(w, n, &prefix_y);
@@ -144,7 +159,7 @@ void icfl(char *w, int n, int *ff_list, int *ff_list_len, char **fs, int fs_len)
 	char p[256];
 	char bre[256];
 	int last;
-	icfl_find_bre(prefix_x, prefix_y, ff_list, ff_list_len, p, bre, &last);
+	icfl_find_bre(prefix_x, prefix_y, ff_list, p, bre, &last);
 	free(prefix_x);
 
 	// Recursive ICFL
@@ -159,7 +174,7 @@ void icfl(char *w, int n, int *ff_list, int *ff_list_len, char **fs, int fs_len)
 	char str4[] = "                 ";
 	char *l_fs[] = { str0, str1, str2, str3, str4};
 	int l_fs_len = 5;
-	icfl(bre_plus_y, bre_plus_y_len, ff_list, ff_list_len, l_fs, l_fs_len);
+	icfl(bre_plus_y, bre_plus_y_len, ff_list, l_fs, l_fs_len);
 	int l_fs_0_len = strlen(l_fs[0]);
 	if (l_fs_0_len > last) {
 		// FIXME: "l_fs[4]" sacrificed :(
@@ -223,10 +238,9 @@ int main() {
 
 	printf("Genome: %s \n", w);
 
-	int *ff_list = (int *) malloc(n);
-	int ff_list_len = 0;
-	icfl(w, n, ff_list, &ff_list_len, fs, fs_len);
-	free(ff_list);
+	FFList* ff_list = create_ff_list(n);
+	icfl(w, n, ff_list, fs, fs_len);
+	destroy_ff_list(ff_list);
 
 	printf(" [0] %s\n", fs[0]);
 	printf(" [1] %s\n", fs[1]);
