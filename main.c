@@ -24,7 +24,7 @@ char* icfl_find_prefix(char *w, int n, char **prefix_y) {
 	// Parameter "n": length of "w"
 
 	if (n == 1) {
-		// x = w + '0'
+		// x = w + '0' (and w has only one letter)
 		char *prefix_x = (char *) malloc(3);
 		prefix_x[0] = w[0];
 		prefix_x[1] = ZERO_CHAR;
@@ -98,14 +98,10 @@ void icfl_get_failure_function(char *s, int s_inner_size, FFList *ff_list) {
 	*/
 }
 
-void icfl_find_bre(char *x, char *y, FFList *ff_list, char *p, char *bre, int *res_last) {
-	char w[512]; // TODO: Capacity of "w" should be the sum of "x" and "y" capacities
-	strcpy(w, x);
-	strcat(w, y); // TODO: We already know the "x" size, don't we?
+void icfl_find_bre(char *w, int w_len, char *x, char *y, FFList *ff_list, char *p, char *bre, int *res_last) {
 	/*
 	printf("ICFL_FIND_BRE: from x=\"%s\" and y=\"%s\", made w=\"%s\"\n", x, y, w);
 	*/
-	int w_len = strlen(w);
 	int x_len = strlen(x);
 	int n = x_len - 1;
 
@@ -150,7 +146,9 @@ void icfl(char *w, int n, FFList *ff_list, char **fs, int fs_len) {
 			&& prefix_x[n] == ZERO_CHAR
 			&& strncmp(prefix_x, w, n - 1) == 0
 	   ) {
+		// x = w + '0', and y = *empty*
 		free(prefix_x);
+		// w is an Inverse Lyndon word, so it's the only ICFL factor.
 		strcpy(fs[0], w);
 		return;
 	}
@@ -159,7 +157,7 @@ void icfl(char *w, int n, FFList *ff_list, char **fs, int fs_len) {
 	char p[256];
 	char bre[256];
 	int last;
-	icfl_find_bre(prefix_x, prefix_y, ff_list, p, bre, &last);
+	icfl_find_bre(w, n, prefix_x, prefix_y, ff_list, p, bre, &last);
 	free(prefix_x);
 
 	// Recursive ICFL
