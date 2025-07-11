@@ -5,17 +5,18 @@
 #define ZERO_CHAR '0'
 
 // ICFL
-void icfl_find_prefix(char *w, int n, char *prefix_x, char **prefix_y) {
+char* icfl_find_prefix(char *w, int n, char **prefix_y) {
 	// Parameter "n": length of "w"
 
 	if (n == 1) {
 		// x = w + '0'
+		char *prefix_x = (char *) malloc(3);
 		prefix_x[0] = w[0];
 		prefix_x[1] = ZERO_CHAR;
 		prefix_x[2] = 0;
 		// y = *empty*
 		*prefix_y = w + n; // The end of "w".
-		return;
+		return prefix_x;
 	}
 
 	int i = 0;
@@ -31,15 +32,17 @@ void icfl_find_prefix(char *w, int n, char *prefix_x, char **prefix_y) {
 
 	if (j == n - 1 && w[j] <= w[j]) {
 		// x = w + '0'
+		char *prefix_x = (char *) malloc(n + 2);
 		strcpy(prefix_x, w);
 		prefix_x[n] = ZERO_CHAR;
 		prefix_x[n + 1] = 0;
 		// y = *empty*
 		*prefix_y = w + n; // The end of "w".
-		return;
+		return prefix_x;
 	}
 
 	// x = w[:j + 1]
+	char *prefix_x = (char *) malloc(j + 1);
 	strncpy(prefix_x, w, j + 1);
 	prefix_x[j + 1] = 0;
 	// y = w[j + 1:]
@@ -48,6 +51,7 @@ void icfl_find_prefix(char *w, int n, char *prefix_x, char **prefix_y) {
 	/*
 	printf("ICFL_FIND_PREFIX: from w=\"%s\" with result 0=\"%s\", 1=\"%s\" \n", w, prefix_x, *prefix_y);
 	*/
+	return prefix_x;
 }
 
 void icfl_get_failure_function(char *s, int s_inner_size, int *ff_list, int *ff_list_len) {
@@ -123,15 +127,15 @@ void icfl_find_bre(char *x, char *y, int *ff_list, int *ff_list_len, char *p, ch
 
 void icfl(char *w, int n, int *ff_list, int *ff_list_len, char **fs, int fs_len) {
 	// Find Prefix
-	char prefix_x[256] = "";
 	char *prefix_y;
-	icfl_find_prefix(w, n, prefix_x, &prefix_y);
+	char *prefix_x = icfl_find_prefix(w, n, &prefix_y);
 
 	if (
 			prefix_x[n + 1] == 0
 			&& prefix_x[n] == ZERO_CHAR
 			&& strncmp(prefix_x, w, n - 1) == 0
 	   ) {
+		free(prefix_x);
 		strcpy(fs[0], w);
 		return;
 	}
@@ -141,6 +145,7 @@ void icfl(char *w, int n, int *ff_list, int *ff_list_len, char **fs, int fs_len)
 	char bre[256];
 	int last;
 	icfl_find_bre(prefix_x, prefix_y, ff_list, ff_list_len, p, bre, &last);
+	free(prefix_x);
 
 	// Recursive ICFL
 	char *bre_plus_y = (char*) malloc(512);
