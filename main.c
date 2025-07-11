@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #define ZERO_CHAR '0'
+#define MAX_ICFL_FACTORS 256
 
 // INT LIST
 typedef struct IntList {
@@ -18,6 +19,23 @@ IntList *int_list_create(int capacity) {
 void int_list_free(IntList *int_list) {
 	free(int_list->list);
 	free(int_list);
+}
+/*void int_list_expand(IntList *dst, IntList *src) {
+	for (size_t i = 0; i < src->length; ++i) {
+		dst->list[dst->length] = src->list[i];
+		dst->length++;
+	}
+}*/
+void int_list_append(IntList* dst, int new_value) {
+	dst->list[dst->length] = new_value;
+	dst->length++;
+}
+void int_list_println(IntList* dst) {
+	printf("(%d", dst->list[0]);
+	for (size_t i = 1; i < dst->length; ++i) {
+		printf(", %d", dst->list[i]);
+	}
+	printf(")\n");
 }
 
 // ICFL
@@ -131,13 +149,13 @@ void icfl_find_bre(char *w, int w_len, char *x, char *y, IntList *ff_list, char 
 	*res_last = last + 1;
 }
 
-void icfl(char *w, int n, IntList *ff_list, char **fs, int fs_len) {
+void icfl(char *w, int n, IntList *ff_list, IntList* factors) {
 	// Find Prefix
 	int prefix_x_length = icfl_find_prefix(w, n);
 	if (prefix_x_length == n) {
 		// x = w, y = *empty*
 		// w is Inverse Lyndon word => w is the only ICFL factor here
-		strcpy(fs[0], w);
+		int_list_append(factors, n);
 		return;
 	}
 
@@ -157,36 +175,24 @@ void icfl(char *w, int n, IntList *ff_list, char **fs, int fs_len) {
 	strcpy(bre_plus_y, bre);
 	strcat(bre_plus_y, prefix_y);
 	int bre_plus_y_len = strlen(bre_plus_y);
-	char str0[] = "                 ";
-	char str1[] = "                 ";
-	char str2[] = "                 ";
-	char str3[] = "                 ";
-	char str4[] = "                 ";
-	char *l_fs[] = { str0, str1, str2, str3, str4};
-	int l_fs_len = 5;
-	icfl(bre_plus_y, bre_plus_y_len, ff_list, l_fs, l_fs_len);
-	int l_fs_0_len = strlen(l_fs[0]);
+	IntList* l_factors = int_list_create(MAX_ICFL_FACTORS);
+	icfl(bre_plus_y, bre_plus_y_len, ff_list, l_factors);
+	int p_len = strlen(p);
+	int l_fs_0_len = l_factors->list[0];
 	if (l_fs_0_len > last) {
-		// FIXME: "l_fs[4]" sacrificed :(
-		strcpy(fs[4], l_fs[3]);
-		strcpy(fs[3], l_fs[2]);
-		strcpy(fs[2], l_fs[1]);
-		strcpy(fs[1], l_fs[0]);
-		strcpy(fs[0], p);
-	} else {
-		int p_len = strlen(p);
-		for (int i = l_fs_0_len - 1; i >= p_len; --i) {
-			l_fs[0][i] = l_fs[0][i - p_len];
-		}
-		for (int i = 0; i < p_len; ++i) {
-			l_fs[0][i] = p[i];
-		}
-		strcpy(fs[0], l_fs[0]);
-		strcpy(fs[1], l_fs[1]);
-		strcpy(fs[2], l_fs[2]);
-		strcpy(fs[3], l_fs[3]);
-		strcpy(fs[4], l_fs[4]);
+		int_list_append(factors, p_len);
 	}
+	for (size_t i = 0; i < l_factors->length; ++i) {
+		int_list_append(factors, l_factors->list[i]);
+	}
+	if (l_fs_0_len <= last) {
+		factors->list[0] += p_len;
+	}
+	int_list_free(l_factors);
+	/*
+	printf("ICFL on w=%s, result: ", w);
+	int_list_println(factors);
+	*/
 }
 
 // PREFIX TREE
@@ -218,38 +224,14 @@ int main() {
 	int n = strlen(w);
 
 	// ICFL
-	char str0[] = "                        ";
-	char str1[] = "                        ";
-	char str2[] = "                        ";
-	char str3[] = "                        ";
-	char str4[] = "                        ";
-	char *fs[] = { str0, str1, str2, str3, str4 };
-	int fs_len = 5;
-
 	printf("Genome: %s \n", w);
 
+	IntList* factors = int_list_create(MAX_ICFL_FACTORS);
 	IntList* ff_list = int_list_create(n);
-	icfl(w, n, ff_list, fs, fs_len);
+	icfl(w, n, ff_list, factors);
 	int_list_free(ff_list);
 
-	printf(" [0] %s\n", fs[0]);
-	printf(" [1] %s\n", fs[1]);
-	printf(" [2] %s\n", fs[2]);
-	printf(" [3] %s\n", fs[3]);
-	printf(" [4] %s\n", fs[4]);
-
-	int icfl_idxs[] = { 0, 0, 0, 0 };
-	icfl_idxs[0] = 0;
-	int i = 0;
-	while (i < fs_len && fs[i] != 0) {
-		icfl_idxs[i + 1] = strlen(fs[i]) + icfl_idxs[i];
-		++i;
-	}
-
-	for (int i = 0; i < 5; ++i) {
-		printf("%d ", icfl_idxs[i]);
-	}
-	printf("\n");
+	int_list_println(factors);
 
 	// PREFIX TREE BUILD
 	PTNode *pt_root = pt_create_root();
