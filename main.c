@@ -20,18 +20,15 @@ void destroy_ff_list(FFList *ff_list) {
 	free(ff_list);
 }
 
-char* icfl_find_prefix(char *w, int n, char **prefix_y) {
+int icfl_find_prefix(char *w, int n) {
 	// Parameter "n": length of "w"
+	// Result: if w = xy, this function returns |x| (and so |y|=|w|-|x|)
 
 	if (n == 1) {
-		// x = w + '0' (and w has only one letter)
-		char *prefix_x = (char *) malloc(3);
-		prefix_x[0] = w[0];
-		prefix_x[1] = ZERO_CHAR;
-		prefix_x[2] = 0;
-		// y = *empty*
-		*prefix_y = w + n; // The end of "w".
-		return prefix_x;
+		// Here w is an Inverse Lyndon word with only one letter:
+		//   x = w
+		//   y = *empty*
+		return n;
 	}
 
 	int i = 0;
@@ -46,27 +43,23 @@ char* icfl_find_prefix(char *w, int n, char **prefix_y) {
 	}
 
 	if (j == n - 1 && w[j] <= w[j]) {
-		// x = w + '0'
-		char *prefix_x = (char *) malloc(n + 2);
-		strcpy(prefix_x, w);
-		prefix_x[n] = ZERO_CHAR;
-		prefix_x[n + 1] = 0;
-		// y = *empty*
-		*prefix_y = w + n; // The end of "w".
-		return prefix_x;
+		// Here w is an Inverse Lyndon word:
+		//   x = w
+		//   y = *empty*
+		return n;
 	}
 
 	// x = w[:j + 1]
-	char *prefix_x = (char *) malloc(j + 1);
-	strncpy(prefix_x, w, j + 1);
-	prefix_x[j + 1] = 0;
 	// y = w[j + 1:]
-	// strcpy(prefix_y, w + j + 1);
-	*prefix_y = w + j + 1;
+
 	/*
-	printf("ICFL_FIND_PREFIX: from w=\"%s\" with result 0=\"%s\", 1=\"%s\" \n", w, prefix_x, *prefix_y);
+	char *x = (char *) malloc(j + 1);
+	strncpy(x, w, j + 1);
+	x[j + 1] = 0;
+	char *y = w + j + 1;
+	printf("ICFL_FIND_PREFIX: from w=\"%s\" with result x=\"%s\", y=\"%s\" \n", w, x, y);
 	*/
-	return prefix_x;
+	return j + 1;
 }
 
 void icfl_get_failure_function(char *s, int s_inner_length, FFList *ff_list) {
@@ -139,18 +132,19 @@ void icfl_find_bre(char *w, int w_len, char *x, char *y, FFList *ff_list, char *
 
 void icfl(char *w, int n, FFList *ff_list, char **fs, int fs_len) {
 	// Find Prefix
-	char *prefix_y;
-	char *prefix_x = icfl_find_prefix(w, n, &prefix_y);
-
-	if (*prefix_y == 0) {
-		// x = w + '0', and y = *empty*
-		free(prefix_x);
-		// w is an Inverse Lyndon word, so it's the only ICFL factor.
+	int prefix_x_length = icfl_find_prefix(w, n);
+	if (prefix_x_length == n) {
+		// x = w, y = *empty*
+		// w is Inverse Lyndon word => w is the only ICFL factor here
 		strcpy(fs[0], w);
 		return;
 	}
 
 	// Find Bre
+	char *prefix_x = (char *) malloc(prefix_x_length);
+	strncpy(prefix_x, w, prefix_x_length);
+	prefix_x[prefix_x_length] = 0;
+	char *prefix_y = w + prefix_x_length;
 	char p[256];
 	char bre[256];
 	int last;
