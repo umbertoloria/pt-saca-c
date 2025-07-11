@@ -4,22 +4,23 @@
 
 #define ZERO_CHAR '0'
 
-// ICFL
-typedef struct FFList {
+// INT LIST
+typedef struct IntList {
 	int *list;
 	int length;
-} FFList;
-FFList *create_ff_list(int capacity) {
-	FFList *ff_list = (FFList *) malloc(sizeof(struct FFList));
-	ff_list->list = (int *) malloc(capacity);
-	ff_list->length = 0;
-	return ff_list;
+} IntList;
+IntList *int_list_create(int capacity) {
+	IntList *int_list = (IntList *) malloc(sizeof(struct IntList));
+	int_list->list = (int *) malloc(capacity);
+	int_list->length = 0;
+	return int_list;
 }
-void destroy_ff_list(FFList *ff_list) {
-	free(ff_list->list);
-	free(ff_list);
+void int_list_free(IntList *int_list) {
+	free(int_list->list);
+	free(int_list);
 }
 
+// ICFL
 int icfl_find_prefix(char *w, int n) {
 	// Parameter "n": length of "w"
 	// Result: if w = xy, this function returns |x| (and so |y|=|w|-|x|)
@@ -62,7 +63,7 @@ int icfl_find_prefix(char *w, int n) {
 	return j + 1;
 }
 
-void icfl_get_failure_function(char *s, int s_inner_length, FFList *ff_list) {
+void icfl_get_failure_function(char *s, int s_inner_length, IntList *ff_list) {
 	int m = s_inner_length;
 	for (size_t i = 0; i < m; ++i) {
 		ff_list->list[i] = 0;
@@ -91,7 +92,7 @@ void icfl_get_failure_function(char *s, int s_inner_length, FFList *ff_list) {
 	*/
 }
 
-void icfl_find_bre(char *w, int w_len, char *x, char *y, FFList *ff_list, char *p, char *bre, int *res_last) {
+void icfl_find_bre(char *w, int w_len, char *x, char *y, IntList *ff_list, char *p, char *bre, int *res_last) {
 	/*
 	printf("ICFL_FIND_BRE: from x=\"%s\" and y=\"%s\", made w=\"%s\"\n", x, y, w);
 	*/
@@ -130,7 +131,7 @@ void icfl_find_bre(char *w, int w_len, char *x, char *y, FFList *ff_list, char *
 	*res_last = last + 1;
 }
 
-void icfl(char *w, int n, FFList *ff_list, char **fs, int fs_len) {
+void icfl(char *w, int n, IntList *ff_list, char **fs, int fs_len) {
 	// Find Prefix
 	int prefix_x_length = icfl_find_prefix(w, n);
 	if (prefix_x_length == n) {
@@ -227,9 +228,9 @@ int main() {
 
 	printf("Genome: %s \n", w);
 
-	FFList* ff_list = create_ff_list(n);
+	IntList* ff_list = int_list_create(n);
 	icfl(w, n, ff_list, fs, fs_len);
-	destroy_ff_list(ff_list);
+	int_list_free(ff_list);
 
 	printf(" [0] %s\n", fs[0]);
 	printf(" [1] %s\n", fs[1]);
