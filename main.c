@@ -158,6 +158,10 @@ void icfl(char *w, int n, IntList *ff_list, IntList* factors) {
 		// x = w, y = *empty*
 		// w is Inverse Lyndon word => w is the only ICFL factor here
 		int_list_append(factors, n);
+		/*
+		printf("ICFL on w=%s, result: ", w);
+		int_list_println(factors);
+		*/
 		return;
 	}
 
@@ -168,29 +172,39 @@ void icfl(char *w, int n, IntList *ff_list, IntList* factors) {
 	char *bre_plus_y;
 	int last;
 	icfl_find_bre(w, n, x_length, x_last_char, y, ff_list, p, &bre_plus_y, &last);
-	/*printf(" -> w=%s, x_length=%d, x_last_char=%c\n", w, x_length, x_last_char);
-	printf("    -> p=%s, bre_plus_y=%s, last=%d\n", p, bre_plus_y, last);*/
+	/*
+	printf(" -> w=%s, x_length=%d, x_last_char=%c\n", w, x_length, x_last_char);
+	printf("    -> p=%s, bre_plus_y=%s, last=%d\n", p, bre_plus_y, last);
+	*/
 
 	// Recursive ICFL
-	/*char *bre_plus_y = (char*) malloc(512);
+	/*
+	char *bre_plus_y = (char*) malloc(512);
 	strcpy(bre_plus_y, bre);
-	strcat(bre_plus_y, y);*/
-	int bre_plus_y_len = strlen(bre_plus_y);
+	strcat(bre_plus_y, y);
+	*/
+	int bre_plus_y_length = strlen(bre_plus_y);
 	IntList* l_factors = int_list_create(MAX_ICFL_FACTORS);
-	icfl(bre_plus_y, bre_plus_y_len, ff_list, l_factors);
-	//free(bre_plus_y);
+	icfl(bre_plus_y, bre_plus_y_length, ff_list, l_factors);
+	/*
+	free(bre_plus_y);
+	*/
+
 	int p_len = strlen(p);
 	int l_fs_0_len = l_factors->list[0];
 	if (l_fs_0_len > last) {
 		int_list_append(factors, p_len);
-	}
-	for (size_t i = 0; i < l_factors->length; ++i) {
-		int_list_append(factors, l_factors->list[i]);
-	}
-	if (l_fs_0_len <= last) {
-		factors->list[0] += p_len;
+		for (size_t i = 0; i < l_factors->length; ++i) {
+			int_list_append(factors, l_factors->list[i]);
+		}
+	} else {
+		int_list_append(factors, l_factors->list[0] + p_len);
+		for (size_t i = 1; i < l_factors->length; ++i) {
+			int_list_append(factors, l_factors->list[i]);
+		}
 	}
 	int_list_free(l_factors);
+
 	/*
 	printf("ICFL on w=%s, result: ", w);
 	int_list_println(factors);
@@ -240,4 +254,3 @@ int main() {
 
 	return 0;
 }
-
