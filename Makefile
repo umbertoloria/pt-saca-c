@@ -1,6 +1,6 @@
 CXX = gcc
-CXXFLAGS =
-SRCS = main.c
+CXXFLAGS =-w
+SRCS = main.c int_list.h icfl.h prefix_tree.h
 TARGET = ptsaca
 
 .PHONY: run clean build bar
